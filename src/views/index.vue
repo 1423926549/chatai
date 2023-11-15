@@ -1,8 +1,8 @@
 <script setup>
 import {ref, watch} from "vue";
-import {ChatDotSquare, CloseBold, Delete, Document, Edit} from "@element-plus/icons-vue";
+import {ChatDotSquare, CloseBold, Delete, Document, Edit, Headset} from "@element-plus/icons-vue";
 
-let data = ref([
+let chats = ref([
   {id: 1, name: "chat1"},
   {id: 2, name: "chat2"},
   {id: 3, name: "chat3chat3chat3chat3chat3chat3chat3chat3"},
@@ -20,11 +20,76 @@ let data = ref([
   {id: 15, name: "chat15"}
 ])
 
+let dialogue = ref([
+  {
+    id: 1,
+    type: 1,
+    time: "2021-01-01 12:00:00",
+    content: "chat1 content"
+  },
+  {
+    id: 2,
+    type: 2,
+    time: "2021-01-01 12:00:00",
+    content: "chat2 content"
+  },
+  {
+    id: 3,
+    type: 1,
+    time: "2021-01-01 12:00:00",
+    content: "chat2 content"
+  },
+  {
+    id: 4,
+    type: 2,
+    time: "2021-01-01 12:00:00",
+    content: "chat2 content"
+  },
+  {
+    id: 5,
+    type: 1,
+    time: "2021-01-01 12:00:00",
+    content: "chat2 content"
+  },
+  {
+    id: 6,
+    type: 2,
+    time: "2021-01-01 12:00:00",
+    content: "chat2 content"
+  },
+  {
+    id: 7,
+    type: 1,
+    time: "2021-01-01 12:00:00",
+    content: "chat2 content"
+  },
+  {
+    id: 8,
+    type: 2,
+    time: "2021-01-01 12:00:00",
+    content: "chat2 content"
+  },
+  {
+    id: 9,
+    type: 1,
+    time: "2021-01-01 12:00:00",
+    content: "chat2 content"
+  },
+  {
+    id: 10,
+    type: 2,
+    time: "2021-01-01 12:00:00",
+    content: "chat2 content"
+  },
+])
+
 const problem = ref('')
 let loading = ref(false)
 let activeId = ref(1)
 let editChatId = ref(0)
 let editChatName = ref('')
+
+
 
 const changeActive = (id) => {
   activeId.value = id
@@ -40,6 +105,17 @@ const saveChatName = (item) => {
   editChatId.value = 0
 }
 
+const deleteChat = (item) => {
+  chats.value = chats.value.filter(chat => chat.id !== item.id)
+  activeId.value = chats.value[0].id
+}
+
+const createChat = () => {
+  // 向data开头添加元素
+  chats.value.unshift({id: chats.value.length + 1, name: 'newChat'})
+  problem.value = ''
+}
+
 watch((activeId), () => {
   editChatId.value = 0
 })
@@ -51,10 +127,10 @@ watch((activeId), () => {
     <el-container>
       <el-aside class="left">
         <div class="new-chat-div">
-          <button ref="newChat" class="new-chat">New chat</button>
+          <button @click="createChat" ref="newChat" class="new-chat">New chat</button>
         </div>
         <el-scrollbar class="chat-div">
-          <div class="chat-list" v-for="item in data">
+          <div class="chat-list" v-for="item in chats">
             <div :class="{ activeChat : item.id === activeId} " class="chat-list-div" @click="changeActive(item.id)">
               <el-icon class="chat-icon"><ChatDotSquare /></el-icon>
 
@@ -66,11 +142,20 @@ watch((activeId), () => {
               />
               <div class="chat-operation" v-show="item.id === activeId && item.id !== editChatId">
                 <el-icon class="chat-operation-icon" @click="editChat(item)"><Edit /></el-icon>
-                <el-icon class="chat-operation-icon"><Delete /></el-icon>
+                <a-popconfirm
+                    content="是否删除?"
+                    okText="删除"
+                    cancelText="取消"
+                    position="bl"
+                    type="error"
+                    @ok="deleteChat(item)"
+                >
+                  <el-icon class="chat-operation-icon"><Delete /></el-icon>
+                </a-popconfirm>
               </div>
               <div class="chat-operation"  v-show="item.id === activeId && item.id === editChatId">
                 <el-icon class="chat-operation-icon" @click="saveChatName(item)"><Select /></el-icon>
-                <el-icon class="chat-operation-icon"><CloseBold /></el-icon>
+                  <el-icon class="chat-operation-icon" @click="editChatId = 0"><CloseBold /></el-icon>
               </div>
             </div>
           </div>
@@ -80,7 +165,28 @@ watch((activeId), () => {
         </div>
       </el-aside>
       <el-main class="main">
-        <div class="content"></div>
+        <div class="content">
+          <div class="speak-div" v-for="item in dialogue">
+            <div v-show="item.type === 1" class="my-speak">
+              <div class="my-header header">
+                <icon-lark-color class="my-header-icon" />
+              </div>
+              <div class="my-content">
+                <p class="my-time">{{item.time}}</p>
+                <div class="my-text">{{item.content}}</div>
+              </div>
+            </div>
+            <div v-show="item.type === 2" class="chat-speak">
+              <div class="chat-header header">
+                <icon-tiktok-color class="chat-header-icon" />
+              </div>
+              <div class="chat-content">
+                <p class="chat-time">{{item.time}}</p>
+                <div class="chat-text">{{item.content}}</div>
+              </div>
+            </div>
+          </div>
+        </div>
         <div class="quest">
           <el-input class="quest-input" v-model="problem" placeholder="请输入" />
           <el-button id="submit" type="primary" :loading="loading" icon="Position"></el-button>
@@ -91,6 +197,82 @@ watch((activeId), () => {
 </template>
 
 <style scoped>
+
+.arco-icon {
+  font-size: 50px;
+}
+
+.my-speak {
+  display: flex;
+  margin: 10px 0 20px 0;
+}
+
+.chat-speak {
+  display: flex;
+  margin: 10px 0 20px 50px;
+}
+
+.my-content {
+  margin-left: 30px;
+  width: calc(100% - 100px);
+}
+
+.chat-content {
+  margin-left: 30px;
+  width: calc(100% - 100px);
+}
+
+
+.my-time {
+  text-align: right;
+  color: #888888;
+}
+
+.chat-time {
+  text-align: left;
+  color: #888888;
+}
+
+.my-text {
+  font-size: 15px;
+  background-color: rgba(98, 231, 98, 0.48);
+  padding: 10px;
+  border-radius: 5px;
+}
+
+.chat-text {
+  font-size: 15px;
+  background-color: rgba(198, 203, 199, 0.48);
+  padding: 10px;
+  border-radius: 5px;
+}
+
+.header {
+  height: 50px;
+  width: 50px;
+  position: absolute;
+  text-align: center;
+  margin-top: 20px;
+}
+
+.my-header {
+  right: 10px;
+}
+
+.chat-header {
+  left: 10px;
+}
+
+
+.my-header-icon {
+  position: absolute;
+  right: 0;
+}
+
+.chat-header-icon {
+  position: absolute;
+  left: 0;
+}
 
 .chat-operation {
   position: relative;
@@ -144,7 +326,7 @@ watch((activeId), () => {
 .common-layout {
   border: 1px solid #ccc;
   margin: 10px;
-  width: 97%;
+  width: 98%;
   height: 95%;
   position: fixed;
   border-radius: 5px;
@@ -164,7 +346,6 @@ watch((activeId), () => {
 
 .chat-div {
   height: 80%;
-  //overflow-y: auto;
 }
 
 .chat-list {
@@ -226,9 +407,9 @@ watch((activeId), () => {
 .content {
   position: absolute;
   top: 5px;
-  width: 95%;
+  width: 100%;
   height: 90%;
-  border: 1px solid #ccc;
+  overflow-y: scroll;
 }
 
 .quest {
