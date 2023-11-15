@@ -1,11 +1,11 @@
 <script setup>
-import {ref} from "vue";
-import {ChatDotSquare, Delete, Edit} from "@element-plus/icons-vue";
+import {ref, watch} from "vue";
+import {ChatDotSquare, CloseBold, Delete, Document, Edit} from "@element-plus/icons-vue";
 
 let data = ref([
   {id: 1, name: "chat1"},
   {id: 2, name: "chat2"},
-  {id: 3, name: "chat3"},
+  {id: 3, name: "chat3chat3chat3chat3chat3chat3chat3chat3"},
   {id: 4, name: "chat4"},
   {id: 5, name: "chat5"},
   {id: 6, name: "chat6"},
@@ -22,10 +22,27 @@ let data = ref([
 
 const problem = ref('')
 let loading = ref(false)
+let activeId = ref(1)
+let editChatId = ref(0)
+let editChatName = ref('')
 
-const suspension = () => {
-
+const changeActive = (id) => {
+  activeId.value = id
 }
+
+const editChat = (item) => {
+  editChatName.value = item.name
+  editChatId.value = item.id
+}
+
+const saveChatName = (item) => {
+  item.name = editChatName.value
+  editChatId.value = 0
+}
+
+watch((activeId), () => {
+  editChatId.value = 0
+})
 
 </script>
 
@@ -34,16 +51,26 @@ const suspension = () => {
     <el-container>
       <el-aside class="left">
         <div class="new-chat-div">
-          <button class="new-chat">New chat</button>
+          <button ref="newChat" class="new-chat">New chat</button>
         </div>
         <el-scrollbar class="chat-div">
           <div class="chat-list" v-for="item in data">
-            <div class="chat-list-div">
+            <div :class="{ activeChat : item.id === activeId} " class="chat-list-div" @click="changeActive(item.id)">
               <el-icon class="chat-icon"><ChatDotSquare /></el-icon>
-              <span class="chat-name">{{ item.name }}</span>
-              <div class="chat-operation" v-show="item.id === 2">
-                <el-icon class="chat-operation-icon"><Edit /></el-icon>
+
+              <span v-show="item.id !== editChatId" class="chat-name">{{ item.name }}</span>
+              <el-input
+                  v-model="editChatName"
+                  class="w-50 m-2 chat-name-input"
+                  v-show="item.id === activeId && item.id === editChatId"
+              />
+              <div class="chat-operation" v-show="item.id === activeId && item.id !== editChatId">
+                <el-icon class="chat-operation-icon" @click="editChat(item)"><Edit /></el-icon>
                 <el-icon class="chat-operation-icon"><Delete /></el-icon>
+              </div>
+              <div class="chat-operation"  v-show="item.id === activeId && item.id === editChatId">
+                <el-icon class="chat-operation-icon" @click="saveChatName(item)"><Select /></el-icon>
+                <el-icon class="chat-operation-icon"><CloseBold /></el-icon>
               </div>
             </div>
           </div>
@@ -73,6 +100,15 @@ const suspension = () => {
 
 .chat-name {
   width: 120px;
+  margin-left: 15px;
+  white-space:nowrap;
+  text-overflow:ellipsis;
+  overflow:hidden;
+}
+
+.chat-name-input {
+  width: 120px;
+  margin-left: 15px;
 }
 
 .chat-operation-icon {
@@ -98,6 +134,11 @@ const suspension = () => {
   background-color: white;
   border-radius: 10px;
   cursor: pointer;
+}
+
+.new-chat:hover {
+  border: 1px dashed green;
+  color: green;
 }
 
 .common-layout {
@@ -142,15 +183,24 @@ const suspension = () => {
   cursor: pointer;
 }
 
+
+.activeChat {
+  color: green;
+  background-color: #f0f0f0;
+  border-color: green;
+}
+
+.chat-list-div:hover {
+  background-color: #f0f0f0;
+}
+
 .chat-icon {
   margin-left: 10px;
 }
 
-.chat-name {
-  margin-left: 15px;
-}
 
 .user {
+  background-color: white;
   position: absolute;
   bottom: 0;
   width: 100%;
@@ -166,7 +216,7 @@ const suspension = () => {
   top: 0;
   bottom: 0;
   right: 0;
-  width: 80%;
+  width: calc(100% - 300px);)
   height: 100%;
   display: flex;
   align-items: center;
