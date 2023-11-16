@@ -1,6 +1,6 @@
 <script setup>
 import {ref, watch} from "vue";
-import {ChatDotSquare, CloseBold, Delete, Document, Edit, Headset} from "@element-plus/icons-vue";
+import {ChatDotSquare, CloseBold, Delete, Edit} from "@element-plus/icons-vue";
 import loginFrom from '@/views/form/login.vue'
 import editFrom from '@/views/form/edit.vue'
 import regFrom from '@/views/form/register.vue'
@@ -85,7 +85,6 @@ let activeId = ref(1)
 let editChatId = ref(0)
 let editChatName = ref('')
 let isLogin = ref(false)
-let dialogFormVisible = ref(false)
 
 let user = ref({
   name: '张三',

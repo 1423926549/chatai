@@ -20,7 +20,8 @@ let loginForm = ref({
 const rules = {
   username: [
     {required: true, message: '请输入用户名', trigger: 'blur'},
-    {min: 8, max: 16, message: '长度在 8 到 16 个字符', trigger: 'blur'}
+    {pattern: /^[a-zA-Z0-9]{8,16}$/, message: '用户名由 8-16 个字符组成，可包含字母、数字', trigger: 'blur'}
+
   ],
   password: [
     {required: true, message: '请输入密码', trigger: 'blur'}

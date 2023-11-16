@@ -31,6 +31,9 @@ const checkPassword = () => {
 }
 
 const rules = {
+  username: [
+    {pattern: /^[a-zA-Z0-9]{8,16}$/, message: '用户名由 8-16 个字符组成，可包含字母、数字', trigger: 'blur'}
+  ],
   oldPassword: [{validator: checkPassword, trigger: 'blur'}],
   newPassword: [
     {required: true, message: '请输入密码', trigger: 'blur'},

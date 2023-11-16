@@ -22,7 +22,7 @@ const rules = {
   ],
   username: [
     {required: true, message: '请输入用户名', trigger: 'blur'},
-    {pattern: /^[a-zA-Z0-9_-]{8,16}$/, message: '用户名由 8-16 个字符组成，可包含字母、数字、下划线和中划线', trigger: 'blur'}
+    {pattern: /^[a-zA-Z0-9]{8,16}$/, message: '用户名由 8-16 个字符组成，可包含字母、数字', trigger: 'blur'}
   ],
   password: [
     {required: true, message: '请输入密码', trigger: 'blur'},
