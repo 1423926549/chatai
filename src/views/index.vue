@@ -1,6 +1,9 @@
 <script setup>
 import {ref, watch} from "vue";
 import {ChatDotSquare, CloseBold, Delete, Document, Edit, Headset} from "@element-plus/icons-vue";
+import loginFrom from '@/views/form/login.vue'
+import editFrom from '@/views/form/edit.vue'
+import regFrom from '@/views/form/register.vue'
 
 let chats = ref([
   {id: 1, name: "chat1"},
@@ -25,13 +28,13 @@ let dialogue = ref([
     id: 1,
     type: 1,
     time: "2021-01-01 12:00:00",
-    content: "chat1 content"
+    content: "chat1 content chat1 content chat1 content chat1 content chat1 content chat1 content chat1 content chat1 content chat1 content chat1 content chat1 content chat1 content chat1 content chat1 content chat1 content chat1 content"
   },
   {
     id: 2,
     type: 2,
     time: "2021-01-01 12:00:00",
-    content: "chat2 content"
+    content: "chat2 content chat2 content chat2 content chat2 content chat2 content chat2 content chat2 content chat2 content chat2 content chat2 content chat2 content chat2 content chat2 content chat2 content chat2 content chat2 content chat2 content chat2 content"
   },
   {
     id: 3,
@@ -49,13 +52,13 @@ let dialogue = ref([
     id: 5,
     type: 1,
     time: "2021-01-01 12:00:00",
-    content: "chat2 content"
+    content: "chat1 content chat1 content chat1 content chat1 content chat1 content chat1 content chat1 content chat1 content chat1 content chat1 content chat1 content chat1 content chat1 content chat1 content chat1 content chat1 content"
   },
   {
     id: 6,
     type: 2,
     time: "2021-01-01 12:00:00",
-    content: "chat2 content"
+    content: "chat2 content chat2 content chat2 content chat2 content chat2 content chat2 content chat2 content chat2 content chat2 content chat2 content chat2 content chat2 content chat2 content chat2 content chat2 content chat2 content chat2 content chat2 content"
   },
   {
     id: 7,
@@ -68,28 +71,27 @@ let dialogue = ref([
     type: 2,
     time: "2021-01-01 12:00:00",
     content: "chat2 content"
-  },
-  {
-    id: 9,
-    type: 1,
-    time: "2021-01-01 12:00:00",
-    content: "chat2 content"
-  },
-  {
-    id: 10,
-    type: 2,
-    time: "2021-01-01 12:00:00",
-    content: "chat2 content"
-  },
+  }
 ])
 
 const problem = ref('')
+
+const loginDialog = ref(null)
+const editDialog = ref(null)
+const regDialog = ref(null)
+
 let loading = ref(false)
 let activeId = ref(1)
 let editChatId = ref(0)
 let editChatName = ref('')
+let isLogin = ref(false)
+let dialogFormVisible = ref(false)
 
-
+let user = ref({
+  name: '张三',
+  username: 'admin',
+  password: ''
+})
 
 const changeActive = (id) => {
   activeId.value = id
@@ -116,8 +118,30 @@ const createChat = () => {
   problem.value = ''
 }
 
+const showLoginFrom = () => {
+  loginDialog.value.handleShow()
+}
+
+const showEditFrom = () => {
+  editDialog.value.handleShow()
+}
+
+const showRegFrom = () => {
+  regDialog.value.handleShow()
+}
+
+const logout = () => {
+  isLogin.value = false
+}
+
+const changeLoginStatus = (status) => {
+  isLogin.value = status
+}
+
 watch((activeId), () => {
   editChatId.value = 0
+  console.log(user.value)
+  console.log(isLogin.value)
 })
 
 </script>
@@ -161,7 +185,19 @@ watch((activeId), () => {
           </div>
         </el-scrollbar>
         <div class="user">
-          <div>登录用户</div>
+          <div v-if="isLogin" class="login-div">
+            <img @click="showEditFrom"
+                 class="user-header"
+                 src="https://chat-he.oss-cn-hangzhou.aliyuncs.com/default_handsome.jpg"
+                 alt="加载失败"
+            />
+            <div @click="showEditFrom" class="username">{{user.name}}</div>
+            <div class="logout" @click="logout">退出</div>
+          </div>
+          <div v-else class="no-login-div">
+            <div class="login" @click="showLoginFrom">登录</div>
+            <div class="register" @click="showRegFrom">注册</div>
+          </div>
         </div>
       </el-aside>
       <el-main class="main">
@@ -193,10 +229,59 @@ watch((activeId), () => {
         </div>
       </el-main>
     </el-container>
+    <loginFrom ref="loginDialog" :user="user" @changeLoginStatus="changeLoginStatus"></loginFrom>
+    <editFrom ref="editDialog" :user="user"></editFrom>
+    <regFrom ref="regDialog" :user="user"></regFrom>
   </div>
 </template>
 
 <style scoped>
+
+.no-login-div {
+  display: flex;
+}
+
+.register {
+  font-size: 18px;
+  cursor: pointer;
+  color: #3395fa;
+  margin-left: 20px;
+}
+
+.login {
+  font-size: 18px;
+  cursor: pointer;
+  color: #3395fa;
+  margin-right: 20px;
+}
+
+.login-div {
+  width: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.user-header {
+  height: 50px;
+  width: 50px;
+  position: relative;
+  left: 20px;
+  cursor: pointer;
+}
+
+.username {
+  position: relative;
+  left: 50px;
+  cursor: pointer;
+}
+
+.logout {
+  position: absolute;
+  right: 10px;
+  font-size: 15px;
+  cursor: pointer;
+  color: #b04a4a;
+}
 
 .arco-icon {
   font-size: 50px;
@@ -204,6 +289,7 @@ watch((activeId), () => {
 
 .my-speak {
   display: flex;
+  flex-direction: row-reverse;
   margin: 10px 0 20px 0;
 }
 
@@ -214,12 +300,14 @@ watch((activeId), () => {
 
 .my-content {
   margin-left: 30px;
-  width: calc(100% - 100px);
+  margin-right: 80px;
+  //width: calc(100% - 100px);
 }
 
 .chat-content {
   margin-left: 30px;
-  width: calc(100% - 100px);
+  margin-right: 80px;
+  //width: calc(100% - 100px);
 }
 
 
@@ -409,7 +497,16 @@ watch((activeId), () => {
   top: 5px;
   width: 100%;
   height: 90%;
-  overflow-y: scroll;
+  overflow-y: auto;
+}
+
+.content::-webkit-scrollbar {
+  width: 5px;
+}
+
+.content::-webkit-scrollbar-thumb{
+  border-radius: 5px;
+  background-color: rgba(144, 147, 153, 0.53);
 }
 
 .quest {
