@@ -4,6 +4,7 @@ import {ChatDotSquare, CloseBold, Delete, Edit} from "@element-plus/icons-vue";
 import loginFrom from '@/views/form/login.vue'
 import editFrom from '@/views/form/edit.vue'
 import regFrom from '@/views/form/register.vue'
+import moment from 'moment'
 
 let chats = ref([
   {id: 1, name: "chat1"},
@@ -137,11 +138,41 @@ const changeLoginStatus = (status) => {
   isLogin.value = status
 }
 
-watch((activeId), () => {
-  editChatId.value = 0
-  console.log(user.value)
-  console.log(isLogin.value)
-})
+const send = () => {
+  if (problem.value.trim() === '') {
+    return
+  }
+  loading.value = true
+  dialogue.value.push({
+    id: dialogue.value.length + 1,
+    type: 1,
+    time: moment().format('YYYY-MM-DD HH:mm:ss'),
+    content: problem.value
+  })
+  problem.value = ''
+  setTimeout(() => {
+    let div = document.getElementById("content")
+    div.scrollTop = div.scrollHeight
+  }, 20)
+  loading.value = false
+
+  dialogue.value.push({
+    id: dialogue.value.length + 1,
+    type: 2,
+    time: moment().format('YYYY-MM-DD HH:mm:ss'),
+    content: '这是机器人的回答'
+  })
+  setTimeout(() => {
+    let div = document.getElementById("content")
+    div.scrollTop = div.scrollHeight
+  }, 20)
+}
+
+
+watch([activeId, dialogue], () => {
+    editChatId.value = 0
+  }
+)
 
 </script>
 
@@ -200,7 +231,7 @@ watch((activeId), () => {
         </div>
       </el-aside>
       <el-main class="main">
-        <div class="content">
+        <div id="content" class="content">
           <div class="speak-div" v-for="item in dialogue">
             <div v-show="item.type === 1" class="my-speak">
               <div class="my-header header">
@@ -224,7 +255,7 @@ watch((activeId), () => {
         </div>
         <div class="quest">
           <el-input class="quest-input" v-model="problem" placeholder="请输入" />
-          <el-button id="submit" type="primary" :loading="loading" icon="Position"></el-button>
+          <el-button @click="send" id="submit" type="primary" :loading="loading" icon="Position"></el-button>
         </div>
       </el-main>
     </el-container>
