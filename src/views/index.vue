@@ -4,81 +4,66 @@ import {ChatDotSquare, CloseBold, Delete, Edit} from "@element-plus/icons-vue";
 import loginFrom from '@/views/form/login.vue'
 import editFrom from '@/views/form/edit.vue'
 import regFrom from '@/views/form/register.vue'
-import moment from 'moment'
 import {createChatService, deleteChatService, editChatService, getChatsService} from "@/api/chats";
 import {ElMessage} from "element-plus";
-import {userCheckLoginService} from "@/api/user";
+import {logoutService, userCheckLoginService} from "@/api/user";
+import {getAnswersService, getTalkListService, sendQuestionService} from "@/api/talk";
+import {storeToRefs} from "pinia";
+import {useUserStore} from "@/stores";
 
 let chats = ref()
-
-let dialogue = ref([
-  {
-    id: 1,
-    type: 1,
-    time: "2021-01-01 12:00:00",
-    content: "chat1 content chat1 content chat1 content chat1 content chat1 content chat1 content chat1 content chat1 content chat1 content chat1 content chat1 content chat1 content chat1 content chat1 content chat1 content chat1 content"
-  },
-  {
-    id: 2,
-    type: 2,
-    time: "2021-01-01 12:00:00",
-    content: "chat2 content chat2 content chat2 content chat2 content chat2 content chat2 content chat2 content chat2 content chat2 content chat2 content chat2 content chat2 content chat2 content chat2 content chat2 content chat2 content chat2 content chat2 content"
-  },
-  {
-    id: 3,
-    type: 1,
-    time: "2021-01-01 12:00:00",
-    content: "chat2 content"
-  },
-  {
-    id: 4,
-    type: 2,
-    time: "2021-01-01 12:00:00",
-    content: "chat2 content"
-  },
-  {
-    id: 5,
-    type: 1,
-    time: "2021-01-01 12:00:00",
-    content: "chat1 content chat1 content chat1 content chat1 content chat1 content chat1 content chat1 content chat1 content chat1 content chat1 content chat1 content chat1 content chat1 content chat1 content chat1 content chat1 content"
-  },
-  {
-    id: 6,
-    type: 2,
-    time: "2021-01-01 12:00:00",
-    content: "chat2 content chat2 content chat2 content chat2 content chat2 content chat2 content chat2 content chat2 content chat2 content chat2 content chat2 content chat2 content chat2 content chat2 content chat2 content chat2 content chat2 content chat2 content"
-  },
-  {
-    id: 7,
-    type: 1,
-    time: "2021-01-01 12:00:00",
-    content: "chat2 content"
-  },
-  {
-    id: 8,
-    type: 2,
-    time: "2021-01-01 12:00:00",
-    content: "chat2 content"
-  }
-])
-
+let dialogue = ref()
 const problem = ref('')
 
 const loginDialog = ref(null)
 const editDialog = ref(null)
 const regDialog = ref(null)
 
+const userStore = useUserStore()
+
 let loading = ref(false)
 let activeId = ref(0)
 let editChatId = ref(0)
 let editChatName = ref('')
-let isLogin = ref(false)
+let isSend = ref(false)
 
-let user = ref({
-  nickname: '张三',
-  username: 'admin',
-  header: 'https://chat-he.oss-cn-hangzhou.aliyuncs.com/default_handsome.jpg'
-})
+const { user, isLogin } = storeToRefs(userStore)
+
+const showLoginFrom = () => {
+  loginDialog.value.handleShow()
+}
+
+const showEditFrom = () => {
+  editDialog.value.handleShow()
+}
+
+const showRegFrom = () => {
+  regDialog.value.handleShow()
+}
+
+const changeActive = (id) => {
+  activeId.value = id
+}
+
+const getIsLogin = async () => {
+  const res = await userCheckLoginService()
+  if (res != null) {
+    userStore.setLogin()
+    userStore.setUser(res)
+  } else {
+    ElMessage.error('请先登录')
+    showLoginFrom()
+    return Promise.reject("未登录")
+  }
+}
+
+const logout = async () => {
+  await logoutService()
+  userStore.clear()
+  chats.value = []
+  dialogue.value = []
+  userStore.setNoLogin()
+}
 
 const getChats = async () => {
   if (!isLogin.value) {
@@ -91,10 +76,6 @@ const getChats = async () => {
     await createChat()
   }
   activeId.value = chats.value[0].id
-}
-
-const changeActive = (id) => {
-  activeId.value = id
 }
 
 const editChat = (item) => {
@@ -119,62 +100,50 @@ const createChat = async () => {
   problem.value = ''
 }
 
-const showLoginFrom = () => {
-  loginDialog.value.handleShow()
+const getTalkList = async () => {
+  dialogue.value = await getTalkListService(activeId.value)
+  setTimeout(() => {
+    let div = document.getElementById("content")
+    div.scrollTop = div.scrollHeight
+  }, 20)
 }
 
-const showEditFrom = () => {
-  editDialog.value.handleShow()
-}
-
-const showRegFrom = () => {
-  regDialog.value.handleShow()
-}
-
-const getIsLogin = async () => {
-  const res = await userCheckLoginService()
-  if (res != null) {
-    isLogin.value = true
-    user.value = res
-  }
-}
-
-const logout = () => {
-  isLogin.value = false
-}
-
-const changeLoginStatus = (status) => {
-  isLogin.value = status
-}
-
-const send = () => {
-  if (problem.value.trim() === '') {
+const send = async () => {
+  if (!isLogin.value) {
+    ElMessage.error('请先登录')
     return
   }
-  loading.value = true
-  dialogue.value.push({
-    id: dialogue.value.length + 1,
-    type: 1,
-    time: moment().format('YYYY-MM-DD HH:mm:ss'),
-    content: problem.value
-  })
-  problem.value = ''
-  setTimeout(() => {
-    let div = document.getElementById("content")
-    div.scrollTop = div.scrollHeight
-  }, 20)
-  loading.value = false
 
-  dialogue.value.push({
-    id: dialogue.value.length + 1,
-    type: 2,
-    time: moment().format('YYYY-MM-DD HH:mm:ss'),
-    content: '这是机器人的回答'
-  })
-  setTimeout(() => {
-    let div = document.getElementById("content")
-    div.scrollTop = div.scrollHeight
-  }, 20)
+  if (problem.value.trim() === '' || isSend.value || !chats.value) {
+    return
+  }
+
+  loading.value = true
+  isSend.value = true
+  try {
+    const chatSession = chats.value.find(item => item.id === activeId.value).chatSession
+    const questionFrom = {
+      chatId: activeId.value,
+      content: problem.value,
+      chatSession: chatSession
+    }
+    await sendQuestionService(questionFrom)
+    await getTalkList()
+    setTimeout(() => {
+      let div = document.getElementById("content")
+      div.scrollTop = div.scrollHeight
+    }, 20)
+    problem.value = ''
+    await getAnswersService(questionFrom)
+    await getTalkList()
+    setTimeout(() => {
+      let div = document.getElementById("content")
+      div.scrollTop = div.scrollHeight
+    }, 20)
+  } finally {
+    loading.value = false
+    isSend.value = false
+  }
 }
 
 onMounted(async () => {
@@ -182,12 +151,18 @@ onMounted(async () => {
     let div = document.getElementById("content")
     div.scrollTop = div.scrollHeight
   }, 20)
-  await getIsLogin()
-  await getChats()
+  try {
+    await getIsLogin()
+    await getChats()
+    await getTalkList()
+  } catch (e) {
+    showLoginFrom()
+  }
 })
 
 watch((activeId), () => {
     editChatId.value = 0
+    getTalkList()
   }
 )
 
@@ -271,12 +246,12 @@ watch((activeId), () => {
           </div>
         </div>
         <div class="quest">
-          <el-input class="quest-input" v-model="problem" placeholder="请输入" />
+          <el-input @keyup.enter="send" class="quest-input" v-model="problem" placeholder="请输入" />
           <el-button @click="send" id="submit" type="primary" :loading="loading" icon="Position"></el-button>
         </div>
       </el-main>
     </el-container>
-    <loginFrom ref="loginDialog" :user="user" @changeLoginStatus="changeLoginStatus"></loginFrom>
+    <loginFrom ref="loginDialog" :getChats="getChats"></loginFrom>
     <editFrom ref="editDialog" :user="user"></editFrom>
     <regFrom ref="regDialog" :user="user"></regFrom>
   </div>

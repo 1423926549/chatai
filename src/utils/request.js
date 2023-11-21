@@ -43,7 +43,11 @@ request.interceptors.response.use(res => {
     if (res.data.code === 200) {
         return res.data.data;
     }
-    ElMessage.error(res.data.message || '服务器异常')
+    if (res.data.code === 401) {
+        ElMessage.error('未登录')
+    }else {
+        ElMessage.error(res.data.message || '服务器异常')
+    }
     return Promise.reject(res.data);
 }, err => {
     if (err.response?.status === 401) {

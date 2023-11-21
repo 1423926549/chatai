@@ -25,3 +25,7 @@ export const userCheckPasswordService = (data) => {
 export const userCheckLoginService = () => {
     return request.get('/user/isLogin')
 }
+
+export const logoutService = () => {
+    return request.get('/user/logout')
+}

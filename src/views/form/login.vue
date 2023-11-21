@@ -4,21 +4,24 @@ import {ref} from "vue";
 import {ElMessage} from "element-plus";
 import {userLoginService} from "@/api/user";
 import {useUserStore} from "@/stores";
+import {storeToRefs} from "pinia";
 
 const props = defineProps({
-  user: Object
+  getChats: Function
 })
 
 const emit = defineEmits(['changeLoginStatus'])
 
+const userStore = useUserStore()
+
 const userForm = ref(null)
 const formLabelWidth = ref(80)
-const userStore = useUserStore()
 let loginDialogFormVisible = ref(false)
 let loginForm = ref({
   username: '',
   password: ''
 })
+const {user} = storeToRefs(userStore)
 
 const rules = ref({
   username: [
@@ -50,10 +53,9 @@ const login = async () => {
       const longToken = res.longToken
       userStore.setShortToken(shortToken)
       userStore.setLongToken(longToken)
-      props.user.username = userInfo.username
-      props.user.nickname = userInfo.nickname
-      props.user.header = userInfo.header
-      emit('changeLoginStatus', true)
+      userStore.setUser(userInfo)
+      userStore.setLogin()
+      props.getChats()
       loginDialogFormVisible.value = false
     } else {
       ElMessage.error('请正确填写')
