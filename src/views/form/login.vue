@@ -2,6 +2,8 @@
 
 import {ref} from "vue";
 import {ElMessage} from "element-plus";
+import {userLoginService} from "@/api/user";
+import {useUserStore} from "@/stores";
 
 const props = defineProps({
   user: Object
@@ -11,13 +13,14 @@ const emit = defineEmits(['changeLoginStatus'])
 
 const userForm = ref(null)
 const formLabelWidth = ref(80)
+const userStore = useUserStore()
 let loginDialogFormVisible = ref(false)
 let loginForm = ref({
   username: '',
   password: ''
 })
 
-const rules = {
+const rules = ref({
   username: [
     {required: true, message: '请输入用户名', trigger: 'blur'},
     {pattern: /^[a-zA-Z0-9]{8,16}$/, message: '用户名由 8-16 个字符组成，可包含字母、数字', trigger: 'blur'}
@@ -26,7 +29,7 @@ const rules = {
   password: [
     {required: true, message: '请输入密码', trigger: 'blur'}
   ]
-}
+})
 
 const closeDialog = () => {
   for (let key in loginForm.value) {
@@ -38,16 +41,22 @@ const handleShow = () => {
   loginDialogFormVisible.value = true
 }
 
-const login = () => {
-  userForm.value.validate((valid) => {
+const login = async () => {
+  userForm.value.validate(async (valid) => {
     if (valid) {
-      props.user.username = loginForm.value.username
-      props.user.password = loginForm.value.password
+      const res = await userLoginService(loginForm.value)
+      const userInfo = res.userInfo
+      const shortToken = res.shortToken
+      const longToken = res.longToken
+      userStore.setShortToken(shortToken)
+      userStore.setLongToken(longToken)
+      props.user.username = userInfo.username
+      props.user.nickname = userInfo.nickname
+      props.user.header = userInfo.header
       emit('changeLoginStatus', true)
       loginDialogFormVisible.value = false
     } else {
       ElMessage.error('请正确填写')
-      return false;
     }
   })
 }

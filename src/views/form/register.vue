@@ -2,6 +2,7 @@
 
 import {ref} from "vue";
 import {ElMessage} from "element-plus";
+import {userRegisterService} from "@/api/user";
 
 const props = defineProps({
   user: Object
@@ -10,13 +11,13 @@ const props = defineProps({
 const regDialogFormVisible = ref(false)
 const userForm = ref(null)
 let regFrom = ref({
-  name: '',
+  nickname: '',
   username: '',
   password: ''
 })
 
-const rules = {
-  name: [
+const rules = ref({
+  nickname: [
     {required: true, message: '请输入昵称', trigger: 'blur'},
     {min: 2, max: 16, message: '长度在 2 到 16 个字符', trigger: 'blur'}
   ],
@@ -28,22 +29,26 @@ const rules = {
     {required: true, message: '请输入密码', trigger: 'blur'},
     {min: 8, max: 16, message: '长度在 8 到 16 个字符', trigger: 'blur'}
   ]
-}
+})
 
 const closeDialog = () => {
+  // 销毁regFrom中的数据
   for (let key in regFrom.value) {
     regFrom.value[key] = ''
   }
 }
 
 const save = () => {
-  userForm.value.validate((valid) => {
+  userForm.value.validate(async (valid) => {
     if (valid) {
+      await userRegisterService(regFrom.value)
+      ElMessage({
+        message: '注册成功',
+        type: 'success',
+      })
       regDialogFormVisible.value = false
-      return true
     } else {
       ElMessage.error('校验失败')
-      return false;
     }
   })
 }
@@ -69,8 +74,8 @@ defineExpose({
       v-model="regDialogFormVisible"
       title="注册">
     <el-form :model="regFrom" :rules="rules" ref="userForm">
-      <el-form-item label="昵称" label-width="80" prop="name">
-        <el-input class="login-input" v-model="regFrom.name" autocomplete="off" />
+      <el-form-item label="昵称" label-width="80" prop="nickname">
+        <el-input class="login-input" v-model="regFrom.nickname" autocomplete="off" />
       </el-form-item>
       <el-form-item label="用户名" label-width="80" prop="username">
         <el-input class="login-input" v-model="regFrom.username" autocomplete="off" />
@@ -83,7 +88,7 @@ defineExpose({
       <span class="dialog-footer">
         <el-button @click="regDialogFormVisible = false">取消</el-button>
         <el-button type="primary" @click="save">
-          保存
+          注册
         </el-button>
       </span>
     </template>

@@ -2,14 +2,15 @@
 
 import {ref} from "vue";
 import {ElMessage} from "element-plus";
+import {userCheckPasswordService, userEditService} from "@/api/user";
 
 const props = defineProps({
   user: Object
 })
 
 let editFrom = ref({
-  name: props.user.name,
-  username: props.user.username,
+  nickname: '',
+  username: '',
   oldPassword: '',
   newPassword: ''
 })
@@ -23,41 +24,49 @@ const closeDialog = () => {
   }
 }
 
-const checkPassword = () => {
-  if (props.user.password !== editFrom.value.oldPassword) {
+const checkPassword = async () => {
+  const b = await userCheckPasswordService({username: editFrom.value.username, password: editFrom.value.oldPassword})
+  console.log(b)
+  if (!b) {
     return Promise.reject("原密码错误")
   }
   return Promise.resolve()
 }
 
-const rules = {
-  username: [
-    {pattern: /^[a-zA-Z0-9]{8,16}$/, message: '用户名由 8-16 个字符组成，可包含字母、数字', trigger: 'blur'}
+const rules = ref({
+  nickname: [
+    {required: true, message: '请输入昵称', trigger: 'blur'},
+    {min: 2, max: 16, message: '长度在 2 到 16 个字符', trigger: 'blur'}
   ],
-  oldPassword: [{validator: checkPassword, trigger: 'blur'}],
+  username: [
+    {required:true, pattern: /^[a-zA-Z0-9]{8,16}$/, message: '用户名由 8-16 个字符组成，可包含字母、数字', trigger: 'blur'}
+  ],
+  oldPassword: [{required: true, validator: checkPassword, trigger: 'blur'}],
   newPassword: [
     {required: true, message: '请输入密码', trigger: 'blur'},
     {min: 8, max: 16, message: '长度在 8 到 16 个字符', trigger: 'blur'}
   ]
-}
+})
 
 const handleShow = () => {
   editDialogFormVisible.value = true
-  editFrom.value.name = props.user.name
+  editFrom.value.nickname = props.user.nickname
   editFrom.value.username = props.user.username
 }
 
 const save = () => {
-  userForm.value.validate((valid) => {
+  userForm.value.validate(async (valid) => {
     if (valid) {
-      props.user.value.name = editFrom.value.name
-      props.user.value.username = editFrom.value.username
-      props.user.value.password = editFrom.value.newPassword
+      const res = await userEditService(editFrom.value);
+      props.user.nickname = res.nickname
+      props.user.username = res.username
       editDialogFormVisible.value = false
-      return true
+      ElMessage({
+        message: '修改成功',
+        type:'success',
+      })
     } else {
       ElMessage.error('校验失败')
-      return false;
     }
   })
 }
@@ -79,8 +88,8 @@ defineExpose({
       v-model="editDialogFormVisible"
       title="编辑">
     <el-form :model="editFrom" :rules="rules" ref="userForm">
-      <el-form-item label="昵称" label-width="80" prop="name">
-        <el-input class="login-input" v-model="editFrom.name" autocomplete="off" />
+      <el-form-item label="昵称" label-width="80" prop="nickname">
+        <el-input class="login-input" v-model="editFrom.nickname" autocomplete="off" />
       </el-form-item>
       <el-form-item label="用户名" label-width="80" prop="username">
         <el-input disabled class="login-input" v-model="editFrom.username" autocomplete="off" />

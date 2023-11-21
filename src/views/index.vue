@@ -1,28 +1,15 @@
 <script setup>
-import {ref, watch} from "vue";
+import {onMounted, ref, watch} from "vue";
 import {ChatDotSquare, CloseBold, Delete, Edit} from "@element-plus/icons-vue";
 import loginFrom from '@/views/form/login.vue'
 import editFrom from '@/views/form/edit.vue'
 import regFrom from '@/views/form/register.vue'
 import moment from 'moment'
+import {createChatService, deleteChatService, editChatService, getChatsService} from "@/api/chats";
+import {ElMessage} from "element-plus";
+import {userCheckLoginService} from "@/api/user";
 
-let chats = ref([
-  {id: 1, name: "chat1"},
-  {id: 2, name: "chat2"},
-  {id: 3, name: "chat3chat3chat3chat3chat3chat3chat3chat3"},
-  {id: 4, name: "chat4"},
-  {id: 5, name: "chat5"},
-  {id: 6, name: "chat6"},
-  {id: 7, name: "chat7"},
-  {id: 8, name: "chat8"},
-  {id: 9, name: "chat9"},
-  {id: 10, name: "chat10"},
-  {id: 11, name: "chat11"},
-  {id: 12, name: "chat12"},
-  {id: 13, name: "chat13"},
-  {id: 14, name: "chat14"},
-  {id: 15, name: "chat15"}
-])
+let chats = ref()
 
 let dialogue = ref([
   {
@@ -82,39 +69,53 @@ const editDialog = ref(null)
 const regDialog = ref(null)
 
 let loading = ref(false)
-let activeId = ref(1)
+let activeId = ref(0)
 let editChatId = ref(0)
 let editChatName = ref('')
 let isLogin = ref(false)
 
 let user = ref({
-  name: '张三',
+  nickname: '张三',
   username: 'admin',
-  password: ''
+  header: 'https://chat-he.oss-cn-hangzhou.aliyuncs.com/default_handsome.jpg'
 })
+
+const getChats = async () => {
+  if (!isLogin.value) {
+    ElMessage.error('请先登录')
+    return
+  }
+  chats.value = await getChatsService()
+  // 判断是否有chat，没有则添加一个
+  if (chats.value.length === 0) {
+    await createChat()
+  }
+  activeId.value = chats.value[0].id
+}
 
 const changeActive = (id) => {
   activeId.value = id
 }
 
 const editChat = (item) => {
-  editChatName.value = item.name
+  editChatName.value = item.chatName
   editChatId.value = item.id
 }
 
 const saveChatName = (item) => {
-  item.name = editChatName.value
+  item.chatName = editChatName.value
+  editChatService(item)
   editChatId.value = 0
 }
 
-const deleteChat = (item) => {
-  chats.value = chats.value.filter(chat => chat.id !== item.id)
-  activeId.value = chats.value[0].id
+const deleteChat = async (item) => {
+  await deleteChatService(item.id)
+  await getChats()
 }
 
-const createChat = () => {
-  // 向data开头添加元素
-  chats.value.unshift({id: chats.value.length + 1, name: 'newChat'})
+const createChat = async () => {
+  await createChatService()
+  await getChats()
   problem.value = ''
 }
 
@@ -128,6 +129,14 @@ const showEditFrom = () => {
 
 const showRegFrom = () => {
   regDialog.value.handleShow()
+}
+
+const getIsLogin = async () => {
+  const res = await userCheckLoginService()
+  if (res != null) {
+    isLogin.value = true
+    user.value = res
+  }
 }
 
 const logout = () => {
@@ -168,8 +177,16 @@ const send = () => {
   }, 20)
 }
 
+onMounted(async () => {
+  setTimeout(() => {
+    let div = document.getElementById("content")
+    div.scrollTop = div.scrollHeight
+  }, 20)
+  await getIsLogin()
+  await getChats()
+})
 
-watch([activeId, dialogue], () => {
+watch((activeId), () => {
     editChatId.value = 0
   }
 )
@@ -188,7 +205,7 @@ watch([activeId, dialogue], () => {
             <div :class="{ activeChat : item.id === activeId} " class="chat-list-div" @click="changeActive(item.id)">
               <el-icon class="chat-icon"><ChatDotSquare /></el-icon>
 
-              <span v-show="item.id !== editChatId" class="chat-name">{{ item.name }}</span>
+              <span v-show="item.id !== editChatId" class="chat-name">{{ item.chatName }}</span>
               <el-input
                   v-model="editChatName"
                   class="w-50 m-2 chat-name-input"
@@ -218,10 +235,10 @@ watch([activeId, dialogue], () => {
           <div v-if="isLogin" class="login-div">
             <img @click="showEditFrom"
                  class="user-header"
-                 src="https://chat-he.oss-cn-hangzhou.aliyuncs.com/default_handsome.jpg"
+                 :src="user.header"
                  alt="加载失败"
             />
-            <div @click="showEditFrom" class="username">{{user.name}}</div>
+            <div @click="showEditFrom" class="username">{{user.nickname}}</div>
             <div class="logout" @click="logout">退出</div>
           </div>
           <div v-else class="no-login-div">
